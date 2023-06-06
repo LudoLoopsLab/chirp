@@ -1,9 +1,8 @@
-import { SignIn, SignInButton, SignOutButton, useUser } from "@clerk/nextjs";
+import { SignInButton, useUser } from "@clerk/nextjs";
 import { type NextPage } from "next";
 import Head from "next/head";
-import Link from "next/link";
 
-import { RouterOutputs, api } from "~/utils/api";
+import { type RouterOutputs, api } from "~/utils/api";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import Image from "next/image";
@@ -84,7 +83,7 @@ const Home: NextPage = () => {
             {!!user.isSignedIn && <CreatePostWizard />}
           </div>
           <div className="flex flex-col">
-            {[...data!, ...data!]?.map((fullPost) => (
+            {[...data, ...data]?.map((fullPost) => (
               <PostView {...fullPost} key={fullPost.post.id} />
             ))}
           </div>

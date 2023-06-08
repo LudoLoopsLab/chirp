@@ -1,19 +1,30 @@
-import { SignInButton, useUser } from "@clerk/nextjs";
-import { type NextPage } from "next";
-import Head from "next/head";
+import { SignInButton, useUser } from "@clerk/nextjs"
+import { type NextPage } from "next"
+import Head from "next/head"
 
-import { type RouterOutputs, api } from "~/utils/api";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
-import Image from "next/image";
-import { LoadingPage } from "~/components/loading";
+import { type RouterOutputs, api } from "~/utils/api"
+import dayjs from "dayjs"
+import relativeTime from "dayjs/plugin/relativeTime"
+import Image from "next/image"
+import { LoadingPage } from "~/components/loading"
+import { useState } from "react"
 
-dayjs.extend(relativeTime);
+dayjs.extend(relativeTime)
 
 const CreatePostWizard = () => {
-  const { user } = useUser();
+  const { user } = useUser()
+  const [input, setInput] = useState("")
 
-  if (!user) return null;
+  const ctx = api.useContext()
+
+  const { mutate, isLoading: isPosting } = api.posts.create.useMutation({
+    onSuccess: () => {
+      setInput("")
+      void ctx.posts.getAll.invalidate()
+    },
+  })
+
+  if (!user) return null
 
   return (
     <div className="flex w-full gap-3 ">
@@ -27,15 +38,19 @@ const CreatePostWizard = () => {
       <input
         placeholder="Type some emojis!"
         className="grow bg-transparent outline-none"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        disabled={isPosting}
       />
+      <button onClick={() => mutate({ content: input })}>Post</button>
     </div>
-  );
-};
+  )
+}
 
-type PostWithUser = RouterOutputs["posts"]["getAll"][number];
+type PostWithUser = RouterOutputs["posts"]["getAll"][number]
 
 const PostView = (props: PostWithUser) => {
-  const { post, author } = props;
+  const { post, author } = props
   return (
     <div key={post.id} className="flex gap-3 border-b border-slate-400 p-4">
       <Image
@@ -55,32 +70,32 @@ const PostView = (props: PostWithUser) => {
         <span className="text-3xl">{post.content}</span>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const Feed = () => {
-  const { data, isLoading: postsLoading } = api.posts.getAll.useQuery();
+  const { data, isLoading: postsLoading } = api.posts.getAll.useQuery()
 
-  if (postsLoading) return <LoadingPage />;
+  if (postsLoading) return <LoadingPage />
 
-  if (!data) return <div>Something went wrong</div>;
+  if (!data) return <div>Something went wrong</div>
 
   return (
     <div className="flex flex-col">
-      {[...data, ...data]?.map((fullPost) => (
+      {data.map((fullPost) => (
         <PostView {...fullPost} key={fullPost.post.id} />
       ))}
     </div>
-  );
-};
+  )
+}
 
 const Home: NextPage = () => {
-  const { isLoaded: userLoaded, isSignedIn } = useUser();
+  const { isLoaded: userLoaded, isSignedIn } = useUser()
 
   // start fetching asap
-  api.posts.getAll.useQuery();
+  api.posts.getAll.useQuery()
 
-  if (!userLoaded) return <div />;
+  if (!userLoaded) return <div />
 
   return (
     <>
@@ -103,7 +118,7 @@ const Home: NextPage = () => {
         </div>
       </main>
     </>
-  );
-};
+  )
+}
 
-export default Home;
+export default Home

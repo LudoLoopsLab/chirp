@@ -6,8 +6,9 @@ import { type RouterOutputs, api } from "~/utils/api"
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
 import Image from "next/image"
-import { LoadingPage } from "~/components/loading"
+import { LoadingPage, LoadingSpinner } from "~/components/loading"
 import { useState } from "react"
+import { toast } from "react-hot-toast"
 
 dayjs.extend(relativeTime)
 
@@ -21,6 +22,14 @@ const CreatePostWizard = () => {
     onSuccess: () => {
       setInput("")
       void ctx.posts.getAll.invalidate()
+    },
+    onError: (e) => {
+      const errorMessage = e.data?.zodError?.fieldErrors.content
+      if (errorMessage && errorMessage[0]) {
+        toast.error(errorMessage[0])
+      } else {
+        toast.error("Failed to post! Please try again later.")
+      }
     },
   })
 
@@ -41,8 +50,23 @@ const CreatePostWizard = () => {
         value={input}
         onChange={(e) => setInput(e.target.value)}
         disabled={isPosting}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault()
+            if (input !== "") {
+              mutate({ content: input })
+            }
+          }
+        }}
       />
-      <button onClick={() => mutate({ content: input })}>Post</button>
+      {input !== "" && (
+        <button onClick={() => mutate({ content: input })}>Post</button>
+      )}
+      {isPosting && (
+        <div className="flex items-center justify-center">
+          <LoadingSpinner size={20} />
+        </div>
+      )}
     </div>
   )
 }
